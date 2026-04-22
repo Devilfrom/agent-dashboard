@@ -143,6 +143,9 @@ interface AppState {
   clearResults: () => void
   addAgent: (template: AgentTemplate, position?: { x: number, y: number }) => void
   removeAgent: (nodeId: string) => void
+  // Task control
+  startTask: (task: string) => void
+  stopTask: () => void
 }
 
 const getDefaultNodes = (): Node[] => [
@@ -270,5 +273,52 @@ export const useStore = create<AppState>((set, get) => ({
       nodes: state.nodes.filter(n => n.id !== nodeId),
       edges: state.edges.filter(e => e.source !== nodeId && e.target !== nodeId),
     })
+  },
+  
+  // Task control methods
+  startTask: (task: string) => {
+    const state = get()
+    set({ 
+      isRunning: true, 
+      currentTask: task, 
+      taskProgress: 0,
+      results: []
+    })
+    
+    // Simulate task execution
+    const agentOrder = ['researcher', 'coder', 'writer', 'reviewer']
+    const totalSteps = agentOrder.length
+    
+    agentOrder.forEach((agentId, index) => {
+      setTimeout(() => {
+        const progress = ((index + 1) / totalSteps) * 100
+        set({ taskProgress: progress })
+        
+        // Update node status
+        state.updateNodeStatus(agentId, 'running')
+        
+        // Add result after a delay
+        setTimeout(() => {
+          state.updateNodeStatus(agentId, 'success')
+          state.addResult({
+            agentId,
+            type: agentId === 'researcher' ? 'research' : 
+                  agentId === 'coder' ? 'code' : 
+                  agentId === 'writer' ? 'doc' : 'review',
+            content: `[${agentId}] Task completed successfully. This is the output from ${agentId}.`,
+            timestamp: Date.now()
+          })
+          
+          // Check if all done
+          if (index === totalSteps - 1) {
+            set({ isRunning: false, taskProgress: 100 })
+          }
+        }, 2000)
+      }, index * 2500)
+    })
+  },
+  
+  stopTask: () => {
+    set({ isRunning: false, taskProgress: 0 })
   },
 }))

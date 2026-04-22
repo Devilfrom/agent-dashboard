@@ -3,7 +3,7 @@ node_modules/
 .venv/
 
 # Build output
-dist/
+# dist/  # Uncomment to exclude build output
 
 # Logs
 *.log
